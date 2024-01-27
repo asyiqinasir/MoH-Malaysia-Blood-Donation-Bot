@@ -1,6 +1,7 @@
 import requests
 import os
 from datetime import datetime
+from io import BytesIO # for parquet
 
 REPO = "MoH-Malaysia/data-darah-public"  # GitHub repo
 BRANCH = "main"  # Branch to monitor
@@ -76,13 +77,62 @@ def process_latest_commit(commit):
     return data_fetched
 
 
+def fetch_parquet_data(url):
+
+    # Send a GET request to the URL
+    response = requests.get(url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Read the content of the response in bytes
+        file_bytes = BytesIO(response.content)
+
+        df = pd.read_parquet(file_bytes)
+        
+        os.makedirs('data-granular', exist_ok=True)
+
+        print("Downloaded: data-granular")
+        filepath = os.path.join('data-granular', 'ds-data-granular')
+        
+        df.to_parquet(filepath)
+
+    else:
+        raise Exception(f"Failed to fetch data: HTTP {response.status_code}")
+
+def fetch_parquet_data(url,save_filename):
+    # Send a GET request to the URL
+    save_directory='data-granular'
+    response = requests.get(url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Create the save directory if it doesn't exist
+        os.makedirs(save_directory, exist_ok=True)
+
+        # Specify the full path to save the Parquet file
+        filepath = os.path.join(save_directory, save_filename)
+
+        # Save the Parquet data to the specified file
+        with open(filepath, 'wb') as file:
+            file.write(response.content)
+
+        print(f"Downloaded: {save_filename}")
+    else:
+        raise Exception(f"Failed to fetch data: HTTP {response.status_code}")
+
 def main():
+    #fetch data-darah-public
     latest_commit = fetch_latest_commit()
     data_fetched = process_latest_commit(latest_commit)
 
     if data_fetched:
         with open('data_fetched.txt', 'w') as flag_file:
             flag_file.write('Data fetched')
+
+    #fetch granular data
+    url = 'https://dub.sh/ds-data-granular'
+    save_filename='ds-data-granular'
+    fetch_parquet_data(url,save_filename)
 
 if __name__ == "__main__":
     main()
