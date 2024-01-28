@@ -3,10 +3,10 @@ import os
 from datetime import datetime
 from io import BytesIO # for parquet
 
-REPO = "MoH-Malaysia/data-darah-public"  # GitHub repo
-BRANCH = "main"  # Branch to monitor
-CSV_FOLDER = "data-darah-public"  # Folder where CSV files will be saved
-LAST_COMMIT_FILE = "last_commit.txt"  # File to store the SHA of the last processed commit
+REPO = "MoH-Malaysia/data-darah-public"  #github repo
+BRANCH = "main"  #branch to monitor
+CSV_FOLDER = "data-darah-public"  #folder where CSV files will be saved
+LAST_COMMIT_FILE = "last_commit.txt"  #file to store the SHA id of the last processed commit
 
 def fetch_last_commit_sha():
     """
@@ -76,29 +76,6 @@ def process_latest_commit(commit):
 
     return data_fetched
 
-
-def fetch_parquet_data(url):
-
-    # Send a GET request to the URL
-    response = requests.get(url)
-
-    # Check if the request was successful
-    if response.status_code == 200:
-        # Read the content of the response in bytes
-        file_bytes = BytesIO(response.content)
-
-        df = pd.read_parquet(file_bytes)
-        
-        os.makedirs('data-granular', exist_ok=True)
-
-        print("Downloaded: data-granular")
-        filepath = os.path.join('data-granular', 'ds-data-granular')
-        
-        df.to_parquet(filepath)
-
-    else:
-        raise Exception(f"Failed to fetch data: HTTP {response.status_code}")
-
 def fetch_parquet_data(url,save_filename):
     # Send a GET request to the URL
     save_directory='data-granular'
@@ -130,9 +107,9 @@ def main():
             flag_file.write('Data fetched')
 
     #fetch granular data
-    url = 'https://dub.sh/ds-data-granular'
-    save_filename='ds-data-granular'
-    fetch_parquet_data(url,save_filename)
+        url = 'https://dub.sh/ds-data-granular'
+        save_filename='ds-data-granular'
+        fetch_parquet_data(url,save_filename)
 
 if __name__ == "__main__":
     main()
