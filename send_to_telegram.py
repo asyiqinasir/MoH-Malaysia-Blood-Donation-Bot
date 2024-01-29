@@ -46,7 +46,7 @@ async def send_all_images_in_folder(folder_path):
 #def send_image(image_path):
 #    asyncio.get_event_loop().run_until_complete(send_image_async(image_path))
 
-async def send_image_with_caption(bot, chat_id, image_path, caption):
+async def send_image_with_caption(image_path, caption):
     with open(image_path, 'rb') as image_file:
         await bot.send_photo(chat_id=chat_id, photo=image_file, caption=caption)
 
@@ -108,7 +108,7 @@ def count_new_donors_by_year(data, start_year, end_year):
     plt.title(f'New Donors ({start_year} to {end_year})')
     plt.xticks(new_donors_by_year.index, rotation=0)
 
-    #annotatation
+    #annotation
     for bar in bars:
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2.0, height, f'{int(height)}', ha='center', va='bottom')
@@ -116,7 +116,7 @@ def count_new_donors_by_year(data, start_year, end_year):
     plt.tight_layout()    
     output_folder = 'output' 
     os.makedirs(output_folder, exist_ok=True)
-    plt.savefig(os.path.join(output_folder, '1-new_donors_plot.png'))
+    plt.savefig(os.path.join(output_folder, '1-New_Donors_Plot.png'))
 
     return new_donors_by_year
 
@@ -154,7 +154,7 @@ def plot_blood_donation_trends(data, start_year, end_year):
 
     output_folder = 'output'
     os.makedirs(output_folder, exist_ok=True)
-    plt.savefig(os.path.join(output_folder, '2-monthly_donations_trend.png'))
+    plt.savefig(os.path.join(output_folder, '2-Monthly_Donations_Trend.png'))
 
 def plot_blood_donation_trends_by_state(data, start_year, end_year):
     data['date'] = pd.to_datetime(data['date'])
@@ -173,7 +173,7 @@ def plot_blood_donation_trends_by_state(data, start_year, end_year):
 
     overall_total = total_donations_by_state.sum()
 
-    plt.figure(figsize=(15, 10))
+    plt.figure(figsize=(10, 10))
     ax = sorted_pivoted_data.plot(kind='barh', stacked=True)
     plt.title(f'Comparison of Total Blood Donations by State ({start_year}-{end_year})')
     plt.xlabel('Total Donations')
@@ -183,7 +183,7 @@ def plot_blood_donation_trends_by_state(data, start_year, end_year):
     #annotate to show count & %
     for idx, state in enumerate(sorted_pivoted_data.index):
         total_donations = sorted_pivoted_data.loc[state].sum()
-        percentage = (total_donations / overall_total) * 100
+        percentage = (total_donations/overall_total)*100
         plt.annotate(f'{total_donations:,.0f} ({percentage:.1f}%)', (total_donations + 500, idx), fontsize=10, va='center')
 
     #remove x-axis tick labels bcs crowded
@@ -193,7 +193,7 @@ def plot_blood_donation_trends_by_state(data, start_year, end_year):
     output_folder = 'output'
     os.makedirs(output_folder, exist_ok=True)
 
-    plt.savefig(os.path.join(output_folder, '5-donations by state.png'))
+    plt.savefig(os.path.join(output_folder, '5-Donations_by_State.png'))
     
 async def analyze_donor_data(data):
     data['visit_date'] = pd.to_datetime(data['visit_date'])
@@ -214,7 +214,7 @@ async def analyze_donor_data(data):
     data_with_first_year['age_at_visit'] = data_with_first_year['donation_year'] - data_with_first_year['birth_date']
 
     returning_donors = data_with_first_year[data_with_first_year['donor_status'] == 'Returning'].copy()
-    returning_donors['years_since_first_donation'] = (returning_donors['visit_date'] - pd.to_datetime(returning_donors['previous_visit_date'])).dt.days / 365
+    returning_donors['years_since_first_donation'] = (returning_donors['visit_date'] - pd.to_datetime(returning_donors['previous_visit_date'])).dt.days/365 #days in a year
 
     #calculate returning rate (a.k.a retention rates) for 1 to 5 years
     returning_rates = {}
@@ -252,7 +252,7 @@ def plot_return_rates(years, return_rates):
     output_folder = 'output'
     os.makedirs(output_folder, exist_ok=True)
 
-    plt.savefig(os.path.join(output_folder, '3-Retention Rate Over Time.png'))
+    plt.savefig(os.path.join(output_folder, '3-Retention Rate_Over_Time.png'))
 
 def plot_returning_new_donor_counts(data):
     data['visit_date'] = pd.to_datetime(data['visit_date'])
@@ -296,7 +296,7 @@ def plot_returning_new_donor_counts(data):
     output_folder = 'output'
     os.makedirs(output_folder, exist_ok=True)
 
-    plt.savefig(os.path.join(output_folder, '4-Count of new-returning donor.png'))
+    plt.savefig(os.path.join(output_folder, '4-Count_new_returning_donor.png'))
 
 def plot_donor_counts_by_age_and_year(data, start_year, end_year):
     data['visit_date'] = pd.to_datetime(data['visit_date'])
@@ -327,7 +327,7 @@ def plot_donor_counts_by_age_and_year(data, start_year, end_year):
     output_folder = 'output'
     os.makedirs(output_folder, exist_ok=True)
 
-    plt.savefig(os.path.join(output_folder, '5-Donor Count by Age and Year.png'))
+    plt.savefig(os.path.join(output_folder, '6-Donor_Count_Age_Year.png'))
     
 #====================================MAIN===========================================
 async def main():
@@ -341,7 +341,7 @@ async def main():
             dataset_key = os.path.splitext(file_name)[0]
             datasets[dataset_key] = load_data(file_path)
 
-    #initilize the dataset keys and year range
+    #initialize the dataset keys
     newdonors_state = datasets['newdonors_state'] 
     donations_state = datasets['donations_state'] 
 
@@ -351,11 +351,15 @@ async def main():
 
     # ====Part 1 - Trends====
     await send_latest_donation_info(donations_state)
-    count_new_donors_by_year(newdonors_state, start_year, end_year) #problem
+    count_new_donors_by_year(newdonors_state, start_year, end_year) 
     plot_blood_donation_trends(donations_state, start_year, end_year)
-    #await send_image_with_caption(bot, chat_id, 'output/2-monthly_donations_trend.png', "Hello, Monthly Donation Trends") #caption
     plot_blood_donation_trends_by_state(donations_state, start_year, end_year)
 
+    await send_image_with_caption('output/1-New_Donors_Plot.png', "How many new donors this year?") #caption
+    await send_image_with_caption('output/2-Monthly_Donations_Trend.png', "Monthly Donation Trend") #caption
+    await send_image_with_caption('output/5-Donations_by_State.png', "Which state in Malaysia contributes most donation?") #caption 
+    await send_image_with_caption('output/4-Count_new_returning_donor.png', "Which age group contributes most donation per Year") #caption
+    
     # ====Part 2 - Retention rate====
     retention_data_path = './data-granular/ds-data-granular'
     retention_data = pd.read_parquet(retention_data_path)
@@ -364,13 +368,16 @@ async def main():
     plot_returning_new_donor_counts(retention_data)
     plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
 
-    await send_all_images_in_folder('output')
+    await send_image_with_caption('output/3-Retention_Rate_Over_Time.png', "In x year, how many times will the donor return to donate again?") #caption
+    await send_image_with_caption('output/4-Count_new_returning_donor.png', "Let's compare new-donor & returning-donor") #caption
+
+
+
+    #===send all images in folder=====
+    #await send_all_images_in_folder('output')
 
 if __name__ == "__main__":
-    #nest_asyncio.apply()
-    #loop = asyncio.get_event_loop()
-    #loop.run_until_complete(main())
     asyncio.run(main())
 
-    #if os.path.exists('data_fetched.txt'):
+    #if os.path.exists('data_fetched.txt'): 
         #os.remove('data_fetched.txt')
