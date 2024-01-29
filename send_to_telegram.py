@@ -25,19 +25,19 @@ if not os.path.exists('data_fetched.txt'):
     print("File not exists. Exiting script.")
     exit()
     
-#if the file exists
+#open file, if the file not exists, quit.
 with open('data_fetched.txt', 'r') as flag_file:
     if flag_file.read().strip() != 'Data fetched':
         print("Data not fetched. Exiting script.")
         exit()
 
 
-# Function to load data from a CSV file
+#to load data from a CSV file
 def load_data(file_path):
     data = pd.read_csv(file_path)
     return data
 
-# Function to send all PNG files in a folder
+#to send all PNG files in a folder
 async def send_all_images_in_folder(folder_path):
     png_files = glob.glob(os.path.join(folder_path, '*.png'))
     for png_file in png_files:
@@ -49,7 +49,6 @@ async def send_all_images_in_folder(folder_path):
 async def send_image_with_caption(bot, chat_id, image_path, caption):
     with open(image_path, 'rb') as image_file:
         await bot.send_photo(chat_id=chat_id, photo=image_file, caption=caption)
-
 
 async def send_image_async(image_path):
     with open(image_path, 'rb') as image_file:
@@ -87,7 +86,7 @@ async def send_latest_donation_info(data):
 
 
 
-# Function to count new donors by year and create a bar chart
+#To count new donors by year and create a bar chart
 def count_new_donors_by_year(data, start_year, end_year):
     # Use .copy() to explicitly work with a copy of the filtered DataFrame
     malaysia_data = data[data['state'] == 'Malaysia'].copy()
@@ -99,7 +98,7 @@ def count_new_donors_by_year(data, start_year, end_year):
     malaysia_data.loc[:, 'total'] = pd.to_numeric(malaysia_data['total'], errors='coerce')
     malaysia_data.loc[:, 'year'] = malaysia_data['date'].dt.year
 
-    # Group by year & sum the total new donors for each year
+    #group by year & sum the total new donors for each year
     new_donors_by_year = malaysia_data[malaysia_data['year'].between(start_year, end_year)].groupby('year')['total'].sum()
 
     plt.figure(figsize=(9, 5)) 
@@ -109,10 +108,10 @@ def count_new_donors_by_year(data, start_year, end_year):
     plt.title(f'New Donors ({start_year} to {end_year})')
     plt.xticks(new_donors_by_year.index, rotation=0)
 
-    # Annotate bar
+    #annotatation
     for bar in bars:
         height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2.0, height, f'{int(height)}', ha='center', va='bottom')
+        plt.text(bar.get_x() + bar.get_width()/2.0, height, f'{int(height)}', ha='center', va='bottom')
 
     plt.tight_layout()    
     output_folder = 'output' 
@@ -122,14 +121,14 @@ def count_new_donors_by_year(data, start_year, end_year):
     return new_donors_by_year
 
 
-#function to plot monthly blood donation trends and create a line chart
+#to plot monthly blood donation trends, and create a line chart
 def plot_blood_donation_trends(data, start_year, end_year):
     data['date'] = pd.to_datetime(data['date'])
     
-    # Filter data based on the specified years and for 'Malaysia' state
+    #filter data based on the certain years and 'state' must be from 'Malaysia'
     filtered_data = data[(data['date'].dt.year >= start_year) & (data['date'].dt.year <= end_year) & (data['state'] == 'Malaysia')]
 
-    # Group by month and sum up the daily donations
+    #group by month and then sum up the daily donations
     monthly_total_donations = filtered_data.groupby([filtered_data['date'].dt.to_period('M')])['daily'].sum().reset_index()
     monthly_total_donations['date'] = monthly_total_donations['date'].dt.to_timestamp()
     monthly_total_donations.rename(columns={'daily': 'total_donations'}, inplace=True)
@@ -140,13 +139,13 @@ def plot_blood_donation_trends(data, start_year, end_year):
     plt.xlabel('Month and Year')
     plt.ylabel('Total Donations')
 
-    # Format x-axis to show 'Month Year'
+    #format x-axis to show 'Month Year'
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
     plt.xticks(rotation=90)
     plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 
-    # Annotate only the most recent data point
+    #annotate, but only the most recent data point (bcs its too crowded if all is annotated)
     if not monthly_total_donations.empty:
         last_row = monthly_total_donations.iloc[-1]
         plt.text(last_row['date'], last_row['total_donations'], f"{last_row['total_donations']}", color='black', ha='center', va='bottom')
@@ -162,8 +161,7 @@ def plot_blood_donation_trends_by_state(data, start_year, end_year):
     data['year'] = data['date'].dt.year
     data['month'] = data['date'].dt.month
 
-    filtered_data = data[(data['year'] >= start_year) & (data['year'] <= end_year) & (data['state'] != 'Malaysia')]
-
+    filtered_data = data[(data['year'] >= start_year) & (data['year'] <= end_year) & (data['state'] != 'Malaysia')] #state != Malaysia
     yearly_donations = filtered_data.groupby(['state', 'year'])['daily'].sum().reset_index()
 
     #pivot the data to hv years as columns
@@ -182,13 +180,13 @@ def plot_blood_donation_trends_by_state(data, start_year, end_year):
     plt.ylabel('State')
 
     ax.grid(axis='x', linestyle='--', alpha=0.7)
-
+    #annotate to show count & %
     for idx, state in enumerate(sorted_pivoted_data.index):
         total_donations = sorted_pivoted_data.loc[state].sum()
         percentage = (total_donations / overall_total) * 100
         plt.annotate(f'{total_donations:,.0f} ({percentage:.1f}%)', (total_donations + 500, idx), fontsize=10, va='center')
 
-    #remove x-axis tick labels
+    #remove x-axis tick labels bcs crowded
     plt.xticks([])
     plt.legend(title='Year')
     
@@ -239,7 +237,7 @@ On average, in 1 year, {returning_rates['return_within_1_years_formatted']} will
 
     await bot.send_message(chat_id=chat_id, text=message)
 
-    #call the plot function
+    #call this plot function~
     plot_return_rates(range(1, 6), [returning_rates[f'return_within_{years}_years'] for years in range(1, 6)])
 
 def plot_return_rates(years, return_rates):
@@ -270,18 +268,18 @@ def plot_returning_new_donor_counts(data):
     #mark the first donation for each donor as 'New'
     data_donor_status.loc[data_donor_status['donation_year'] == data_donor_status['first_donation_year'], 'donor_status'] = 'New'
 
-    #agregate count unique donors per year by status
+    #agg count unique donors per year by status; new or returning
     donor_counts_per_year = data_donor_status.groupby(['donation_year', 'donor_status'])['donor_id'].nunique().unstack(fill_value=0)
 
     plt.figure(figsize=(10, 6))
 
-    # Create a stacked bar chart
+    #stacked bar chart
     bars_new = plt.bar(donor_counts_per_year.index.astype(str), donor_counts_per_year['New'], color='lightgreen', label='New')
     bars_returning = plt.bar(donor_counts_per_year.index.astype(str), donor_counts_per_year['Returning'], bottom=donor_counts_per_year['New'], color='skyblue', label='Returning')
 
     plt.grid(axis='y', linestyle='--', alpha=0.7)
 
-    # Annotate bars with counts
+    #annotate
     for bars in [bars_new, bars_returning]:
         for bar in bars:
             yval = bar.get_height()
@@ -301,37 +299,35 @@ def plot_returning_new_donor_counts(data):
     plt.savefig(os.path.join(output_folder, '4-Count of new-returning donor.png'))
 
 def plot_donor_counts_by_age_and_year(data, start_year, end_year):
+    data['visit_date'] = pd.to_datetime(data['visit_date'])
+    data['donation_year'] = data['visit_date'].dt.year
+    data['age_at_visit'] = data['donation_year'] - data['birth_date']
+
     bins = [17, 25, 30, 35, 40, 45, 50, 55]
     labels = ['17-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54']
 
-    # Categorize 'age_at_visit' into age groups
     data['age_group'] = pd.cut(data['age_at_visit'], bins=bins, labels=labels, right=False)
 
-    # Filter data for the years between start_year and end_year
+    #filter for the years between start_year and end_year
     filtered_data = data[data['donation_year'].between(start_year, end_year)]
+    #make sure count unique donor_id
+    age_group_year_counts = filtered_data.groupby(['age_group', 'donation_year'], observed=True)['donor_id'].nunique().reset_index() 
+    #observed=true bcs the default observe=false is deprecating (got FutureWarning)
 
-    # Group by 'age_group' and 'donation_year' and count unique 'donor_id's
-    age_group_year_counts = filtered_data.groupby(['age_group', 'donation_year'])['donor_id'].nunique().reset_index()
+    age_group_year_counts = age_group_year_counts[age_group_year_counts['age_group'].isin(labels)] #labels is only until age 50-54
 
-    # Filter age groups to only include '17-24' to '50-54'
-    age_group_year_counts = age_group_year_counts[age_group_year_counts['age_group'].isin(labels)]
-
-    # Create the plot with seaborn's barplot for better hue grouping
     plt.figure(figsize=(10, 6))
-    sns.barplot(x='age_group', y='donor_id', hue='donation_year', data=age_group_year_counts) #
-
-    # Set the title and labels
+    sns.barplot(x='age_group', y='donor_id', hue='donation_year', data=age_group_year_counts) #huee is the year
     plt.title(f'Count of Donors by Age Group and Year ({start_year}-{end_year})')
     plt.xlabel('Age Group')
     plt.ylabel('Count of Donors')
-    plt.xticks(rotation=45)
     plt.legend(title='Donation Year', bbox_to_anchor=(1.05, 1), loc='upper left')
 
     plt.tight_layout()
     output_folder = 'output'
     os.makedirs(output_folder, exist_ok=True)
 
-    plt.savefig(os.path.join(output_folder, '6-Donor Count by Age and Year.png'))
+    plt.savefig(os.path.join(output_folder, '5-Donor Count by Age and Year.png'))
     
 #====================================MAIN===========================================
 async def main():
@@ -347,7 +343,9 @@ async def main():
 
     #initilize the dataset keys and year range
     newdonors_state = datasets['newdonors_state'] 
-    donations_state = datasets['donations_state']  
+    donations_state = datasets['donations_state'] 
+
+    #what year?
     start_year = 2019
     end_year = 2024
 
@@ -356,14 +354,16 @@ async def main():
     count_new_donors_by_year(newdonors_state, start_year, end_year) #problem
     plot_blood_donation_trends(donations_state, start_year, end_year)
     #await send_image_with_caption(bot, chat_id, 'output/2-monthly_donations_trend.png', "Hello, Monthly Donation Trends") #caption
-    
+    plot_blood_donation_trends_by_state(donations_state, start_year, end_year)
+
     # ====Part 2 - Retention rate====
-    
     retention_data_path = './data-granular/ds-data-granular'
     retention_data = pd.read_parquet(retention_data_path)
 
     await analyze_donor_data(retention_data)
     plot_returning_new_donor_counts(retention_data)
+    plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
+
     await send_all_images_in_folder('output')
 
 if __name__ == "__main__":
