@@ -26,7 +26,7 @@ A scheduler script that automates the data fetching process (`fetch_data_latest_
 To set up this project, clone this repository to your local machine and install the required Python packages:
 
 ```bash
-git clone https://github.com/yourusername/MoH-Malaysia-Blood-Donation-Bot.git
+git clone https://github.com/asyiqinasir/MoH-Malaysia-Blood-Donation-Bot.git
 cd MoH-Malaysia-Blood-Donation-Bot
 pip install -r requirements.txt
 ```
