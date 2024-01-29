@@ -194,65 +194,6 @@ def plot_blood_donation_trends_by_state(data, start_year, end_year):
     os.makedirs(output_folder, exist_ok=True)
 
     plt.savefig(os.path.join(output_folder, '5-Donations_by_State.png'))
-    
-async def analyze_donor_data(data):
-    data['visit_date'] = pd.to_datetime(data['visit_date'])
-    data['donation_year'] = data['visit_date'].dt.year
-
-    first_donation_year = data.groupby('donor_id')['donation_year'].min().reset_index()
-    first_donation_year.rename(columns={'donation_year': 'first_donation_year'}, inplace=True)
-
-    #merge data
-    data_with_first_year = pd.merge(data, first_donation_year, on='donor_id')
-
-    #mark 'new' donors in their first ever donation year
-    data_with_first_year['donor_status'] = 'Returning'
-    data_with_first_year.loc[data_with_first_year['donation_year'] == data_with_first_year['first_donation_year'], 'donor_status'] = 'New'
-
-    data_with_first_year['previous_visit_date'] = data_with_first_year.groupby('donor_id')['visit_date'].shift(1)
-    data_with_first_year['days_between_visits'] = (data_with_first_year['visit_date'] - data_with_first_year['previous_visit_date']).dt.days
-    data_with_first_year['age_at_visit'] = data_with_first_year['donation_year'] - data_with_first_year['birth_date']
-
-    returning_donors = data_with_first_year[data_with_first_year['donor_status'] == 'Returning'].copy()
-    returning_donors['years_since_first_donation'] = (returning_donors['visit_date'] - pd.to_datetime(returning_donors['previous_visit_date'])).dt.days/365 #days in a year
-
-    #calculate returning rate (a.k.a retention rates) for 1 to 5 years
-    returning_rates = {}
-    for years in range(1, 6):
-        returning_rates[f'return_within_{years}_years'] = (returning_donors['years_since_first_donation'] <= years).mean()
-        returning_rates[f'return_within_{years}_years_formatted'] = "{:.2%}".format(returning_rates[f'return_within_{years}_years'])
-
-    most_recent_date = data_with_first_year['visit_date'].max()
-    most_old_date = data_with_first_year['visit_date'].min()
-
-    message = f"""The "retention rate" refers to the frequency with which donors return to donate again after their first donation. 
-Blood banks monitor this rate closely as it provides insights into donor retention and the sustainability of the blood supply. 
- - Retention rate 1 year: {returning_rates['return_within_1_years_formatted']} 
- - Retention rate 2 years: {returning_rates['return_within_2_years_formatted']}
- - Retention rate 3 years: {returning_rates['return_within_3_years_formatted']}
- - Retention rate 4 years: {returning_rates['return_within_4_years_formatted']}
- - Retention rate 5 years: {returning_rates['return_within_5_years_formatted']}
-On average, in 1 year, {returning_rates['return_within_1_years_formatted']} will return and donate after their first donation. 
-(last update: {most_old_date.strftime('%Y-%m-%d')}-{most_recent_date.strftime('%Y-%m-%d')})"""
-
-    await bot.send_message(chat_id=chat_id, text=message)
-
-    #call this plot function~
-    plot_return_rates(range(1, 6), [returning_rates[f'return_within_{years}_years'] for years in range(1, 6)])
-
-def plot_return_rates(years, return_rates):
-    plt.figure(figsize=(8, 6))
-    plt.bar(years, return_rates, width=0.4, color='yellow')
-    plt.xlabel('Years Since First Donation')
-    plt.ylabel('Return Rate')
-    plt.xticks(years)
-    plt.title('Retention Rates Over Time')
-    #plt.show()
-
-    output_folder = 'output'
-    os.makedirs(output_folder, exist_ok=True)
-
-    plt.savefig(os.path.join(output_folder, '3-Retention Rate_Over_Time.png'))
 
 def plot_returning_new_donor_counts(data):
     data['visit_date'] = pd.to_datetime(data['visit_date'])
@@ -364,7 +305,6 @@ async def main():
     retention_data_path = './data-granular/ds-data-granular'
     retention_data = pd.read_parquet(retention_data_path)
 
-    await analyze_donor_data(retention_data)
     plot_returning_new_donor_counts(retention_data)
     plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
 
