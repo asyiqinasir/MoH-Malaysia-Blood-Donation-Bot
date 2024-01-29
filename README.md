@@ -21,6 +21,9 @@ A file listing all the Python packages and their versions required to run the pr
 ### scheduler.py
 A scheduler script that automates the data fetching process (`fetch_data_latest_commit.py`) and sends the results to a designated Telegram group using the Bot (`send_to_telegram.py`).
 
+### send_to_telegram.py
+A Python script designed to visualise data, store image outputs in 'output' folder, and send results to Telegram group via Bot. Must be run after 'fetch_data_latest_commit.py' due to flag of latest commit. (see the script for more info)
+
 ## Installation
 
 To set up this project, clone this repository to your local machine and install the required Python packages:
