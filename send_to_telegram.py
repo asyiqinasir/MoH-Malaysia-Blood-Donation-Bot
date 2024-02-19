@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 from datetime import datetime
 import matplotlib.dates as mdates
+import matplotlib.patches as patches
 import seaborn as sns
 from dotenv import load_dotenv
 import asyncio
@@ -22,7 +23,7 @@ bot = Bot(token=bot_token)
 #===============Check for latest commit==============
 #check if the data was fetched
 if not os.path.exists('data_fetched.txt'):
-    print("File not exists. Exiting script.")
+    print("data_fetched.txt file not exists. Exiting script.")
     exit()
     
 #open file, if the file not exists, quit.
@@ -270,6 +271,65 @@ def plot_donor_counts_by_age_and_year(data, start_year, end_year):
 
     plt.savefig(os.path.join(output_folder, '6-Donor_Count_Age_Year.png'))
     
+def plot_donor_retention_heatmap(data, donated_min_x_times):
+
+    data['visit_date'] = pd.to_datetime(data['visit_date'])
+    data['visit_year'] = data['visit_date'].dt.year
+    
+    min_year = data['visit_year'].min() 
+    max_year = data['visit_year'].max()
+
+    donor_yearly_counts = data.groupby(['donor_id', 'visit_year']).size().reset_index(name='donation_count')
+    repeating_donors = donor_yearly_counts[donor_yearly_counts['donation_count']>= donated_min_x_times]
+    percentage_data = pd.DataFrame(index=range(min_year, max_year + 1), columns=range(max_year - min_year + 1))
+
+    for first_year in range(min_year, max_year + 1):
+        first_year_donors = repeating_donors[repeating_donors['visit_year'] == first_year]['donor_id']
+    
+        for N in range(max_year-first_year + 1):
+            current_year = first_year + N
+            still_donating_count = donor_yearly_counts[(donor_yearly_counts['visit_year'] == current_year) &
+                (donor_yearly_counts['donor_id'].isin(first_year_donors))]['donor_id'].nunique()
+
+            if len(first_year_donors) > 0:
+                percentage = round((still_donating_count/len(first_year_donors))*100)
+            else:
+                percentage = 0
+            percentage_data.at[first_year, N] = percentage
+
+    percentage_data = percentage_data.fillna(0)
+    
+    plt.figure(figsize=(8, 8))
+    ax = sns.heatmap(percentage_data, annot=True, cmap="Blues", fmt="d", cbar=False)
+    plt.title(f'% of Donors Still Donating After N Years (at least {donated_min_x_times}x times)')
+    plt.xlabel('N Years since the donors first donation')
+    plt.ylabel('Year (cohort)')
+    ax.xaxis.tick_top()
+    ax.xaxis.set_label_position('top') 
+    plt.yticks(rotation=0)
+    
+    #dynamic sample interpretation
+    example_year = 2023  #example
+    example_n_years = 1  #example
+    if example_n_years < percentage_data.shape[1]:  # Ensure N is within the range
+        example_percentage = percentage_data.loc[example_year, example_n_years]
+        sample_interpretation = (f"Sample Interpretation:\n"
+                                 f"In cohort year {example_year}, {example_percentage}% of those who donated\n"
+                                 f"at least {donated_min_x_times}x in {example_year} have\n"
+                                 f"made donation after {example_n_years} year({example_year+1}).")
+    else:
+        sample_interpretation = "Sample interpretation not available for the selected N years."
+
+    ax.text(5, 10, sample_interpretation, fontsize=10, color='black', ha='left', va='center')
+    
+    for text in ax.texts:
+        if text.get_text() == '0':
+            text.set_text('')
+            
+    output_folder = 'output'
+    os.makedirs(output_folder, exist_ok=True)
+
+    plt.savefig(os.path.join(output_folder, '7-Retention_Rate_Heatmap.png'))    
 #====================================MAIN===========================================
 async def main():
     folder_path = './data-darah-public'
@@ -291,24 +351,34 @@ async def main():
     end_year = 2024
 
     # ====Part 1 - Trends====
-    await send_latest_donation_info(donations_state)
-    count_new_donors_by_year(newdonors_state, start_year, end_year) 
-    plot_blood_donation_trends(donations_state, start_year, end_year)
-    plot_blood_donation_trends_by_state(donations_state, start_year, end_year)
+    #await send_latest_donation_info(donations_state)
+    #count_new_donors_by_year(newdonors_state, start_year, end_year) 
+    #plot_blood_donation_trends(donations_state, start_year, end_year)
+    #plot_blood_donation_trends_by_state(donations_state, start_year, end_year)
 
-    await send_image_with_caption('output/1-New_Donors_Plot.png', "How many new donors this year?🥳") #caption
-    await send_image_with_caption('output/2-Monthly_Donations_Trend.png', "Monthly Donation Trend!") #caption
-    await send_image_with_caption('output/5-Donations_by_State.png', "Which state in Malaysia contributes most donation?") #caption 
-    await send_image_with_caption('output/6-Donor_Count_Age_Year.png', "Which age group contributes most donation per Year? 😎") #caption
+    #await send_image_with_caption('output/1-New_Donors_Plot.png', "How many new donors this year?🥳") #caption
+    #await send_image_with_caption('output/2-Monthly_Donations_Trend.png', "Monthly Donation Trend!") #caption
+    #await send_image_with_caption('output/5-Donations_by_State.png', "Which state in Malaysia contributes most donation?") #caption 
+    #await send_image_with_caption('output/6-Donor_Count_Age_Year.png', "Which age group contributes most donation per Year? 😎") #caption
     
     # ====Part 2 - Retention rate====
     retention_data_path = './data-granular/ds-data-granular'
     retention_data = pd.read_parquet(retention_data_path)
 
-    plot_returning_new_donor_counts(retention_data)
-    plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
-
-    await send_image_with_caption('output/4-Count_new_returning_donor.png', "Donor Retention: Does the previous donor come back? or we gain more Newbies each year?👶") #caption
+    #plot_returning_new_donor_counts(retention_data)
+    #plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
+    
+    #await send_image_with_caption('output/4-Count_new_returning_donor.png', "Donor Retention: Does the previous donor come back? or we gain more Newbies each year?👶") #caption
+    
+    #1x time
+    plot_donor_retention_heatmap(retention_data, donated_min_x_times=1)
+    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donate at least 1x time each year 🔥") 
+    #3x time
+    plot_donor_retention_heatmap(retention_data, donated_min_x_times=3)
+    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donate at least 3x times each year 🔥🔥")
+    #6x time
+    plot_donor_retention_heatmap(retention_data, donated_min_x_times=6)
+    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donate at least 6x times each year 🔥🔥🔥")
 
     #===shortcut to send all images in folder=====
     #await send_all_images_in_folder('output')
@@ -316,5 +386,5 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-    if os.path.exists('data_fetched.txt'): 
-        os.remove('data_fetched.txt')
+    #if os.path.exists('data_fetched.txt'): 
+    #    os.remove('data_fetched.txt')
