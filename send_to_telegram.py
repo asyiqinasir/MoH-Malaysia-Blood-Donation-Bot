@@ -351,24 +351,24 @@ async def main():
     end_year = 2024
 
     # ====Part 1 - Trends====
-    #await send_latest_donation_info(donations_state)
-    #count_new_donors_by_year(newdonors_state, start_year, end_year) 
-    #plot_blood_donation_trends(donations_state, start_year, end_year)
-    #plot_blood_donation_trends_by_state(donations_state, start_year, end_year)
+    await send_latest_donation_info(donations_state)
+    count_new_donors_by_year(newdonors_state, start_year, end_year) 
+    plot_blood_donation_trends(donations_state, start_year, end_year)
+    plot_blood_donation_trends_by_state(donations_state, start_year, end_year)
 
-    #await send_image_with_caption('output/1-New_Donors_Plot.png', "How many new donors this year?🥳") #caption
-    #await send_image_with_caption('output/2-Monthly_Donations_Trend.png', "Monthly Donation Trend!") #caption
-    #await send_image_with_caption('output/5-Donations_by_State.png', "Which state in Malaysia contributes most donation?") #caption 
-    #await send_image_with_caption('output/6-Donor_Count_Age_Year.png', "Which age group contributes most donation per Year? 😎") #caption
+    await send_image_with_caption('output/1-New_Donors_Plot.png', "How many new donors this year?🥳") #caption
+    await send_image_with_caption('output/2-Monthly_Donations_Trend.png', "Monthly Donation Trend!") #caption
+    await send_image_with_caption('output/5-Donations_by_State.png', "Which state in Malaysia contributes most donation?") #caption 
+    await send_image_with_caption('output/6-Donor_Count_Age_Year.png', "Which age group contributes most donation per Year? 😎") #caption
     
     # ====Part 2 - Retention rate====
     retention_data_path = './data-granular/ds-data-granular'
     retention_data = pd.read_parquet(retention_data_path)
 
-    #plot_returning_new_donor_counts(retention_data)
-    #plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
+    plot_returning_new_donor_counts(retention_data)
+    plot_donor_counts_by_age_and_year(retention_data, start_year, end_year)
     
-    #await send_image_with_caption('output/4-Count_new_returning_donor.png', "Donor Retention: Does the previous donor come back? or we gain more Newbies each year?👶") #caption
+    await send_image_with_caption('output/4-Count_new_returning_donor.png', "Donor Retention: Does the previous donor come back? or we gain more Newbies each year?👶") #caption
     
     #1x time
     plot_donor_retention_heatmap(retention_data, donated_min_x_times=1)
@@ -386,5 +386,5 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
-    #if os.path.exists('data_fetched.txt'): 
-    #    os.remove('data_fetched.txt')
+    if os.path.exists('data_fetched.txt'): 
+        os.remove('data_fetched.txt')
