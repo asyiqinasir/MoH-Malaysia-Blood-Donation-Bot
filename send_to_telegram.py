@@ -370,15 +370,18 @@ async def main():
     
     await send_image_with_caption('output/4-Count_new_returning_donor.png', "Donor Retention: Does the previous donor come back? or we gain more Newbies each year?👶") #caption
     
+    await bot.send_message(chat_id=chat_id, text="---DONOR RETENTION DATA---\n"
+                           "The following heatmap plot will show % of donors who donated\n"
+                           "at least x times within the first year of their donation, and continues to donate in the following years~")
     #1x time
     plot_donor_retention_heatmap(retention_data, donated_min_x_times=1)
-    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donate at least 1x time each year 🔥") 
+    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donated at least 1x time 🔥") 
     #3x time
     plot_donor_retention_heatmap(retention_data, donated_min_x_times=3)
-    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donate at least 3x times each year 🔥🔥")
+    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donated at least 3x times 🔥🔥")
     #6x time
     plot_donor_retention_heatmap(retention_data, donated_min_x_times=6)
-    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donate at least 6x times each year 🔥🔥🔥")
+    await send_image_with_caption('output/7-Retention_Rate_Heatmap.png', "Donated at least 6x times 🔥🔥🔥🔥")
 
     #===shortcut to send all images in folder=====
     #await send_all_images_in_folder('output')
